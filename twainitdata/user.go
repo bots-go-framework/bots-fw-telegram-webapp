@@ -1,4 +1,4 @@
-package initdata
+package twainitdata
 
 // User describes user information:
 // https://docs.telegram-mini-apps.com/launch-parameters/init-data#user

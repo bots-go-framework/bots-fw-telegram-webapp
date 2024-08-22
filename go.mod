@@ -1,3 +1,3 @@
-module github.com/telegram-mini-apps/init-data-golang
+module github.com/bots-go-framework/bots-fw-telegram-webapp
 
 go 1.18

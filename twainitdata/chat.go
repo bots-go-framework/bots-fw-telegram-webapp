@@ -1,4 +1,4 @@
-package initdata
+package twainitdata
 
 const (
 	ChatTypeSender     ChatType = "sender"
@@ -11,7 +11,7 @@ const (
 // ChatType describes type of chat.
 type ChatType string
 
-// Known returns true if current chat type is known.
+// Known returns true if the current chat type is known.
 func (c ChatType) Known() bool {
 	switch c {
 	case ChatTypeSender,

@@ -1,7 +1,8 @@
 # github.com/bots-go-framework/bots-fw-telegram-webapp
-<hr>
+
+---
 [![Go CI](https://github.com/bots-go-framework/bots-fw-telegram-webapp/actions/workflows/ci.yml/badge.svg)](https://github.com/bots-go-framework/bots-fw-telegram-webapp/actions/workflows/ci.yml)
-<hr>
+---
 
 Package which provides utilities to work with:
 

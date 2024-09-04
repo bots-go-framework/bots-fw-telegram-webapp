@@ -1,4 +1,4 @@
-package tgwidget
+package tgloginwidget
 
 import (
 	"crypto/hmac"

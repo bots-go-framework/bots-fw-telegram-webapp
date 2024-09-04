@@ -1,4 +1,4 @@
-package tgwidget
+package tgloginwidget
 
 import (
 	"crypto/sha256"
@@ -9,10 +9,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-var ErrBotTokenRequired = errors.New("bot token is required")
-var ErrHashIsNotValidHex = errors.New("provided hash is a not valid hex string")
-var ErrHashMismatch = errors.New("provided hash does not match computed hash")
 
 type AuthData struct {
 	ID        int64  `json:"id"`

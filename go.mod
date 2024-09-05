@@ -1,3 +1,3 @@
 module github.com/bots-go-framework/bots-fw-telegram-webapp
 
-go 1.23
+go 1.22

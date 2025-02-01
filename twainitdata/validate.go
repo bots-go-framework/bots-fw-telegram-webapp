@@ -1,6 +1,7 @@
 package twainitdata
 
 import (
+	"fmt"
 	"net/url"
 	"sort"
 	"strconv"
@@ -8,13 +9,12 @@ import (
 	"time"
 )
 
-// Validate validates passed init data. This method expects initData to be
-// passed in the exact raw format as it could be found
+// Validate validating passed init data.
+// This method expects initData to be passed in the exact raw format as it could be found
 // in window.Telegram.WebApp.initData. Returns true in case init data is
 // signed correctly, and it is allowed to trust it.
 //
-// Current code is implementation of algorithmic code described in official
-// docs:
+// Current code is implementation of algorithmic code described in official docs:
 // https://core.telegram.org/bots/webapps#validating-data-received-via-the-web-app
 //
 // initData - init data passed from application;
@@ -23,6 +23,9 @@ import (
 // parameter. In case, exp duration is less than or equal to 0, function does
 // not check if parameters are expired.
 func Validate(initData, token string, expIn time.Duration) error {
+	if strings.TrimSpace(token) == "" {
+		return ErrAuthTokenRequired
+	}
 	// Parse passed init data as query string.
 	q, err := url.ParseQuery(initData)
 	if err != nil {
@@ -33,7 +36,7 @@ func Validate(initData, token string, expIn time.Duration) error {
 		// Init data creation time.
 		authDate time.Time
 		// Init data sign.
-		hash string
+		receivedHash string
 		// All found key-value pairs.
 		pairs = make([]string, 0, len(q))
 	)
@@ -42,7 +45,7 @@ func Validate(initData, token string, expIn time.Duration) error {
 	for k, v := range q {
 		// Store found sign.
 		if k == "hash" {
-			hash = v[0]
+			receivedHash = v[0]
 			continue
 		}
 		if k == "auth_date" {
@@ -50,19 +53,16 @@ func Validate(initData, token string, expIn time.Duration) error {
 				authDate = time.Unix(int64(i), 0)
 			}
 		}
-		// Append new pair.
+		// Append a new pair.
 		pairs = append(pairs, k+"="+v[0])
 	}
 
 	// Sign is always required.
-	if hash == "" {
-		return ErrSignMissing
+	if receivedHash == "" {
+		return ErrAuthHashIsMissing
 	}
 
-	// In case, expiration time is passed, we do additional parameters check.
-	if expIn > 0 {
-		// In case, auth date is zero, it means, we can not check if parameters
-		// are expired.
+	if expIn > 0 { // Do additional checks of parameters if the expiration date is passed.
 		if authDate.IsZero() {
 			return ErrAuthDateMissing
 		}
@@ -73,12 +73,33 @@ func Validate(initData, token string, expIn time.Duration) error {
 		}
 	}
 
+	if len(pairs) == 0 {
+		return fmt.Errorf("no key-value pairs found in init data")
+	}
+
 	// According to docs, we sort all the pairs in alphabetical order.
 	sort.Strings(pairs)
 
+	dataToSign := strings.Join(pairs, "\n")
+	expectedHash := sign(dataToSign, token)
+
 	// In case, our sign is not equal to found one, we should throw an error.
-	if sign(strings.Join(pairs, "\n"), token) != hash {
-		return ErrSignInvalid
+	if expectedHash != receivedHash {
+		return ErrUnexpectedHash{err: err, ReceivedHash: receivedHash, ExpectedHash: expectedHash}
 	}
 	return nil
+}
+
+type ErrUnexpectedHash struct {
+	err          error
+	ReceivedHash string
+	ExpectedHash string
+}
+
+func (e ErrUnexpectedHash) Error() string {
+	return e.err.Error()
+}
+
+func (e ErrUnexpectedHash) Unwrap() error {
+	return e.err
 }

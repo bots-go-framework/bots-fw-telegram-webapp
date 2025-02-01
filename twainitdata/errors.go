@@ -3,9 +3,10 @@ package twainitdata
 import "errors"
 
 var (
-	ErrAuthDateMissing  = errors.New("auth_date is missing")
-	ErrSignMissing      = errors.New("sign is missing")
-	ErrSignInvalid      = errors.New("sign is invalid")
-	ErrUnexpectedFormat = errors.New("init data has unexpected format")
-	ErrExpired          = errors.New("init data is expired")
+	ErrAuthTokenRequired = errors.New("telegram bot token is required")
+	ErrAuthDateMissing   = errors.New("telegram web app auth_date is missing")
+	ErrAuthHashIsMissing = errors.New("telegram web app auth hash missing")
+	ErrAuthHashIsInvalid = errors.New("telegram web app auth hash is invalid")
+	ErrUnexpectedFormat  = errors.New("telegram web app init data has unexpected format")
+	ErrExpired           = errors.New("telegram web app init data hash expired")
 )

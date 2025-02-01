@@ -31,7 +31,7 @@ var testsValidate = []testValidate{
 	},
 	{
 		initData:    "no_hash=true",
-		expectedErr: ErrSignMissing,
+		expectedErr: ErrAuthHashIsMissing,
 	},
 	{
 		initData:    "hash=abc",
@@ -45,7 +45,7 @@ var testsValidate = []testValidate{
 	},
 	{
 		initData:    validateTestInitData + "abc",
-		expectedErr: ErrSignInvalid,
+		expectedErr: ErrAuthHashIsInvalid,
 	},
 }
 

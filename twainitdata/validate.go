@@ -33,14 +33,11 @@ func Validate(initData, token string, expIn time.Duration) error {
 	}
 
 	var (
-		// Init data creation time.
-		authDate time.Time
+		data TelegramWebappInitData
 		// Init data sign.
 		receivedHash string
-		//signature    string
-		// All found key-value pairs.
-		pairs = make([]string, 0, len(q))
 	)
+	data.Pairs = make([]string, 0, len(q)) // It's OK to make capacity with the same length as q (2 more than needed).
 
 	// Iterate over all key-value pairs of parsed parameters.
 	for k, v := range q {
@@ -52,11 +49,11 @@ func Validate(initData, token string, expIn time.Duration) error {
 			continue
 		case "auth_date":
 			if i, err := strconv.Atoi(v[0]); err == nil {
-				authDate = time.Unix(int64(i), 0)
+				data.AuthDate = time.Unix(int64(i), 0)
 			}
 		}
 		// Append a new pair.
-		pairs = append(pairs, k+"="+v[0])
+		data.Pairs = append(data.Pairs, k+"="+v[0])
 	}
 
 	// Sign is always required.
@@ -65,38 +62,46 @@ func Validate(initData, token string, expIn time.Duration) error {
 	}
 
 	if expIn > 0 { // Do additional checks of parameters if the expiration date is passed.
-		if authDate.IsZero() {
+		if data.AuthDate.IsZero() {
 			return ErrAuthDateMissing
 		}
 
 		// Check if init data is expired.
-		if authDate.Add(expIn).Before(time.Now()) {
+		if data.AuthDate.Add(expIn).Before(time.Now()) {
 			return ErrExpired
 		}
 	}
 
-	if len(pairs) == 0 {
+	if len(data.Pairs) == 0 {
 		return fmt.Errorf("no key-value pairs found in init data")
 	}
 
 	// According to docs, we sort all the pairs in alphabetical order.
-	sort.Strings(pairs)
+	sort.Strings(data.Pairs)
 
-	dataToSign := strings.Join(pairs, "\n")
+	dataToSign := strings.Join(data.Pairs, "\n")
 	expectedHash := sign(dataToSign, token)
 
 	// In case, our sign is not equal to found one, we should throw an error.
 	if expectedHash != receivedHash {
-		return ErrUnexpectedHash{ReceivedHash: receivedHash, ExpectedHash: expectedHash, AuthDate: authDate, Data: pairs}
+		return ErrUnexpectedHash{
+			ReceivedHash: receivedHash,
+			ExpectedHash: expectedHash,
+			Data:         data,
+		}
 	}
 	return nil
+}
+
+type TelegramWebappInitData struct {
+	AuthDate time.Time
+	Pairs    []string
 }
 
 type ErrUnexpectedHash struct {
 	ReceivedHash string
 	ExpectedHash string
-	AuthDate     time.Time
-	Data         []string
+	Data         TelegramWebappInitData
 }
 
 func (e ErrUnexpectedHash) Error() string {

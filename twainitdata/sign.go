@@ -54,12 +54,15 @@ func SignQueryString(qs, key string, authDate time.Time) (string, error) {
 
 // Performs payload subscription. Payload itself slice of key-value pairs
 // joined with "\n".
-func sign(payload, key string) string {
+func sign(payload, token string) string {
 	skHmac := hmac.New(sha256.New, []byte("WebAppData"))
-	skHmac.Write([]byte(key))
+	skHmac.Write([]byte(token))
+	key := skHmac.Sum(nil)
 
-	impHmac := hmac.New(sha256.New, skHmac.Sum(nil))
+	impHmac := hmac.New(sha256.New, key)
 	impHmac.Write([]byte(payload))
+	hashBytes := impHmac.Sum(nil)
+	hashStr := hex.EncodeToString(hashBytes)
 
-	return hex.EncodeToString(impHmac.Sum(nil))
+	return hashStr
 }

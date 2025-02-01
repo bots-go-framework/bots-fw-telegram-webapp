@@ -23,6 +23,9 @@ import (
 // parameter. In case, exp duration is less than or equal to 0, function does
 // not check if parameters are expired.
 func Validate(initData, token string, expIn time.Duration) error {
+	if initData == "" {
+		return ErrInitDataIsMissing
+	}
 	if strings.TrimSpace(token) == "" {
 		return ErrAuthTokenRequired
 	}
@@ -33,43 +36,42 @@ func Validate(initData, token string, expIn time.Duration) error {
 	}
 
 	var (
-		data TelegramWebappInitData
-		// Init data sign.
+		data         TelegramWebappInitData
 		receivedHash string
 	)
-	data.Pairs = make([]string, 0, len(q)) // It's OK to make capacity with the same length as q (2 more than needed).
+	if len(q) > 0 {
+		data.Pairs = make([]string, 0, len(q)-1) // we exclude 'hash' parameter so we need to allocate less memory
+	}
 
-	// Iterate over all key-value pairs of parsed parameters.
+	// Iterate over all key-value pairs of parsed parameters
+	// to exclude 'hash' parameter and to parse 'auth_date' parameter.
 	for k, v := range q {
 		switch k {
 		case "hash":
 			receivedHash = v[0]
 			continue
-		case "signature":
-			continue
 		case "auth_date":
-			if i, err := strconv.Atoi(v[0]); err == nil {
-				data.AuthDate = time.Unix(int64(i), 0)
+			var authDate int
+			if authDate, err = strconv.Atoi(v[0]); err == nil {
+				data.AuthDate = time.Unix(int64(authDate), 0)
+			}
+			if expIn > 0 { // Do additional checks of parameters if the expiration date is passed.
+				if data.AuthDate.IsZero() {
+					return ErrAuthDateMissing
+				}
+
+				// Check if init data is expired.
+				if data.AuthDate.Add(expIn).Before(time.Now()) {
+					return ErrExpired
+				}
 			}
 		}
 		// Append a new pair.
 		data.Pairs = append(data.Pairs, k+"="+v[0])
 	}
 
-	// Sign is always required.
 	if receivedHash == "" {
 		return ErrAuthHashIsMissing
-	}
-
-	if expIn > 0 { // Do additional checks of parameters if the expiration date is passed.
-		if data.AuthDate.IsZero() {
-			return ErrAuthDateMissing
-		}
-
-		// Check if init data is expired.
-		if data.AuthDate.Add(expIn).Before(time.Now()) {
-			return ErrExpired
-		}
 	}
 
 	if len(data.Pairs) == 0 {
@@ -82,7 +84,6 @@ func Validate(initData, token string, expIn time.Duration) error {
 	dataToSign := strings.Join(data.Pairs, "\n")
 	expectedHash := sign(dataToSign, token)
 
-	// In case, our sign is not equal to found one, we should throw an error.
 	if expectedHash != receivedHash {
 		return ErrUnexpectedHash{
 			ReceivedHash: receivedHash,

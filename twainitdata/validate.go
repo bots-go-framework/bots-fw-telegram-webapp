@@ -85,21 +85,22 @@ func Validate(initData, token string, expIn time.Duration) error {
 
 	// In case, our sign is not equal to found one, we should throw an error.
 	if expectedHash != receivedHash {
-		return ErrUnexpectedHash{err: err, ReceivedHash: receivedHash, ExpectedHash: expectedHash}
+		return ErrUnexpectedHash{ReceivedHash: receivedHash, ExpectedHash: expectedHash, AuthDate: authDate, Data: pairs}
 	}
 	return nil
 }
 
 type ErrUnexpectedHash struct {
-	err          error
 	ReceivedHash string
 	ExpectedHash string
+	AuthDate     time.Time
+	Data         []string
 }
 
 func (e ErrUnexpectedHash) Error() string {
-	return e.err.Error()
+	return ErrAuthHashIsInvalid.Error()
 }
 
 func (e ErrUnexpectedHash) Unwrap() error {
-	return e.err
+	return ErrAuthHashIsInvalid
 }

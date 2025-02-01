@@ -1,7 +1,6 @@
 package twainitdata
 
 import (
-	"fmt"
 	"net/url"
 	"sort"
 	"strconv"
@@ -55,16 +54,6 @@ func Validate(initData, token string, expIn time.Duration) error {
 			if authDate, err = strconv.Atoi(v[0]); err == nil {
 				data.AuthDate = time.Unix(int64(authDate), 0)
 			}
-			if expIn > 0 { // Do additional checks of parameters if the expiration date is passed.
-				if data.AuthDate.IsZero() {
-					return ErrAuthDateMissing
-				}
-
-				// Check if init data is expired.
-				if data.AuthDate.Add(expIn).Before(time.Now()) {
-					return ErrExpired
-				}
-			}
 		}
 		// Append a new pair.
 		data.Pairs = append(data.Pairs, k+"="+v[0])
@@ -74,8 +63,19 @@ func Validate(initData, token string, expIn time.Duration) error {
 		return ErrAuthHashIsMissing
 	}
 
+	if expIn > 0 { // Do additional checks of parameters if the expiration date is passed.
+		if data.AuthDate.IsZero() {
+			return ErrAuthDateMissing
+		}
+
+		// Check if init data is expired.
+		if data.AuthDate.Add(expIn).Before(time.Now()) {
+			return ErrExpired
+		}
+	}
+
 	if len(data.Pairs) == 0 {
-		return fmt.Errorf("no key-value pairs found in init data")
+		return ErrNoInitDataForHashing
 	}
 
 	// According to docs, we sort all the pairs in alphabetical order.

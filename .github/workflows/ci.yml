@@ -9,9 +9,8 @@ on:
       - 'v[0-9]+\.[0-9]+\.[0-9]+' # Push events to matching v*, i.e. v20.15.10
     paths:
       - '.github/workflows/**.yml'
-      - 'src/**'
       - 'go.*'
-      - '*.go'
+      - '**/*.go'
   pull_request:
     branches:
       - '**'

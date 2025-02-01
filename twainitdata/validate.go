@@ -37,18 +37,20 @@ func Validate(initData, token string, expIn time.Duration) error {
 		authDate time.Time
 		// Init data sign.
 		receivedHash string
+		//signature    string
 		// All found key-value pairs.
 		pairs = make([]string, 0, len(q))
 	)
 
 	// Iterate over all key-value pairs of parsed parameters.
 	for k, v := range q {
-		// Store found sign.
-		if k == "hash" {
+		switch k {
+		case "hash":
 			receivedHash = v[0]
 			continue
-		}
-		if k == "auth_date" {
+		case "signature":
+			continue
+		case "auth_date":
 			if i, err := strconv.Atoi(v[0]); err == nil {
 				authDate = time.Unix(int64(i), 0)
 			}

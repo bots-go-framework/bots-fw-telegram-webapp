@@ -18,7 +18,10 @@ on:
       - '.github/workflows/**.yml'
       - 'src/**'
       - 'go.*'
-      - '*.go'
+      # '**/*.go', not '*.go': GitHub's '*' never crosses '/', so '*.go' matched
+      # only root-level files and a PR touching just a package (tgoidc/,
+      # tgloginwidget/, twainitdata/) ran no checks at all.
+      - '**/*.go'
 
 jobs:
 

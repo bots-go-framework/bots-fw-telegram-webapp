@@ -115,3 +115,19 @@ func TestVerifyWithNonceIssuer(t *testing.T) {
 		t.Errorf("forged nonce: err = %v; want ErrNonceRejected", err)
 	}
 }
+
+// TestNonceKeyIsDerived pins the purpose separation: the HMAC key is derived
+// from the key passed in, never that key itself, and the derivation is stable
+// so nonces survive a process restart.
+func TestNonceKeyIsDerived(t *testing.T) {
+	now := testNow
+	a := newIssuer(t, &now)
+	if string(a.key) == string(testNonceKey) {
+		t.Fatal("NonceIssuer uses the root key directly as its HMAC key")
+	}
+	b := newIssuer(t, &now)
+	nonce, _ := a.Issue()
+	if err := b.Check(nonce); err != nil {
+		t.Errorf("nonce from one issuer rejected by another on the same root: %v", err)
+	}
+}

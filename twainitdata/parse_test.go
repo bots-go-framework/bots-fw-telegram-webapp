@@ -21,6 +21,10 @@ var testsParse = []testParse{
 		expectedErr: ErrUnexpectedFormat,
 	},
 	{
+		initData:    "query_id=123&auth_date=abc",
+		expectedErr: ErrUnexpectedFormat,
+	},
+	{
 		initData: _parseTestInitData,
 		expectedRes: InitData{
 			QueryID: "AAHdF6IQAAAAAN0XohDhrOrc",
@@ -47,5 +51,38 @@ func TestParse(t *testing.T) {
 		} else if !reflect.DeepEqual(data, test.expectedRes) {
 			t.Errorf("expected result to be %+v. \nReceived %+v", test.expectedRes, data)
 		}
+	}
+}
+
+func TestChatType_Known(t *testing.T) {
+	known := []ChatType{
+		ChatTypeSender,
+		ChatTypePrivate,
+		ChatTypeGroup,
+		ChatTypeSupergroup,
+		ChatTypeChannel,
+	}
+	for _, ct := range known {
+		if !ct.Known() {
+			t.Errorf("expected %q to be known", ct)
+		}
+	}
+	if ChatType("unknown").Known() {
+		t.Errorf("expected 'unknown' to not be known")
+	}
+}
+
+func TestInitData_AuthDateAndCanSendAfter(t *testing.T) {
+	d := InitData{
+		AuthDateRaw:     1662771648,
+		CanSendAfterRaw: 30,
+	}
+	authDate := d.AuthDate()
+	if authDate.Unix() != 1662771648 {
+		t.Errorf("expected auth date 1662771648, got %d", authDate.Unix())
+	}
+	canSendAfter := d.CanSendAfter()
+	if canSendAfter.Unix() != 1662771678 {
+		t.Errorf("expected can send after 1662771678, got %d", canSendAfter.Unix())
 	}
 }

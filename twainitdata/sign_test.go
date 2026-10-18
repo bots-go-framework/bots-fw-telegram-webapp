@@ -43,3 +43,10 @@ func TestSignQueryString(t *testing.T) {
 		}
 	}
 }
+
+func TestSignQueryString_InvalidQuery(t *testing.T) {
+	_, err := SignQueryString("invalid%query%", signTestToken, signTestAuthDate)
+	if err == nil {
+		t.Errorf("expected error, got nil")
+	}
+}

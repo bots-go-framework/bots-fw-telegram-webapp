@@ -19,6 +19,10 @@ type testValidate struct {
 
 var testsValidate = []testValidate{
 	{
+		initData:    "",
+		expectedErr: ErrInitDataIsMissing,
+	},
+	{
 		initData: validateTestInitData,
 	},
 	{
@@ -33,6 +37,11 @@ var testsValidate = []testValidate{
 	{
 		initData:    "no_hash=true",
 		expectedErr: ErrAuthHashIsMissing,
+	},
+	{
+		initData:    "hash=abc",
+		expectedErr: ErrNoInitDataForHashing,
+		expIn:       0,
 	},
 	{
 		initData:    "hash=abc",
@@ -55,5 +64,17 @@ func TestValidate(t *testing.T) {
 		if err := Validate(test.initData, validateTestToken, test.expIn); !errors.Is(err, test.expectedErr) {
 			t.Errorf("expected error to be %q. Received %q", test.expectedErr, err)
 		}
+	}
+
+	if err := Validate("query=1", "", 0); !errors.Is(err, ErrAuthTokenRequired) {
+		t.Errorf("expected ErrAuthTokenRequired, got %v", err)
+	}
+
+	unexpectedHashErr := ErrUnexpectedHash{}
+	if unexpectedHashErr.Error() != ErrAuthHashIsInvalid.Error() {
+		t.Errorf("expected %q, got %q", ErrAuthHashIsInvalid.Error(), unexpectedHashErr.Error())
+	}
+	if !errors.Is(unexpectedHashErr, ErrAuthHashIsInvalid) {
+		t.Errorf("expected errors.Is(unexpectedHashErr, ErrAuthHashIsInvalid) to be true")
 	}
 }

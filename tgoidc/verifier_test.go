@@ -228,3 +228,9 @@ func TestVerifyFetchesRemoteKeySet(t *testing.T) {
 }
 
 var _ crypto.PublicKey = (*rsa.PublicKey)(nil)
+
+func TestParseUserID_InvalidJSONString(t *testing.T) {
+	if _, err := parseUserID(json.RawMessage(`"unterminated`)); err == nil {
+		t.Fatal("expected error for unterminated JSON string")
+	}
+}

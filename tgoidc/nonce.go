@@ -48,10 +48,7 @@ func NewNonceIssuer(key []byte, ttl time.Duration) (*NonceIssuer, error) {
 	if ttl <= 0 {
 		return nil, ErrNonceTTL
 	}
-	derived, err := hkdf.Key(sha256.New, key, nil, nonceDomain, sha256.Size)
-	if err != nil {
-		return nil, fmt.Errorf("tgoidc: derive nonce key: %w", err)
-	}
+	derived, _ := hkdf.Key(sha256.New, key, nil, nonceDomain, sha256.Size)
 	return &NonceIssuer{key: derived, ttl: ttl, now: time.Now, rand: rand.Reader}, nil
 }
 

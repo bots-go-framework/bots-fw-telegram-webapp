@@ -92,6 +92,12 @@ func TestAuthData_Check(t *testing.T) {
 			botToken: "5954447727:AAHkuOHjwojNEKfkmwRgtZlTvDfUJBDDywk",
 			wantErr:  nil,
 		},
+		{
+			name:     "hash_mismatch",
+			input:    AuthData{ID: 1, AuthDate: 1, Hash: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+			botToken: "test-token",
+			wantErr:  ErrHashMismatch,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -130,21 +136,37 @@ func TestAuthData_Validate(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   AuthData
-		wantErr error
+		wantErr bool
 	}{
 		{
-			name:    "empty",
-			input:   AuthData{ID: 1, AuthDate: 2, Hash: "abc"},
-			wantErr: ErrHashIsNotValidHex,
+			name:    "missing_id",
+			input:   AuthData{ID: 0, AuthDate: 1, Hash: "abc"},
+			wantErr: true,
 		},
 		{
-			name:  "should_pass",
-			input: AuthData{ID: 1, AuthDate: 2, Hash: "ebad595ffad01e0cb04d0decd5ec05429c51f313dd3b5a6289f57fe2d95a9eb0"},
+			name:    "missing_auth_date",
+			input:   AuthData{ID: 1, AuthDate: 0, Hash: "abc"},
+			wantErr: true,
+		},
+		{
+			name:    "missing_hash",
+			input:   AuthData{ID: 1, AuthDate: 1, Hash: ""},
+			wantErr: true,
+		},
+		{
+			name:    "invalid_hex",
+			input:   AuthData{ID: 1, AuthDate: 2, Hash: "abc"},
+			wantErr: true,
+		},
+		{
+			name:    "should_pass",
+			input:   AuthData{ID: 1, AuthDate: 2, Hash: "ebad595ffad01e0cb04d0decd5ec05429c51f313dd3b5a6289f57fe2d95a9eb0"},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.input.Validate(); (err == nil) != (tt.wantErr == nil) || err != nil && !errors.Is(err, tt.wantErr) {
+			if err := tt.input.Validate(); (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
